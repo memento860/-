@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>♻️ 분리수거 달인!</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#E8F5E9;user-select:none;-webkit-user-select:none;}
+
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.hidden{display:none!important;}
+
+/* START */
+#start-screen{background:linear-gradient(160deg,#1B5E20 0%,#388E3C 40%,#81C784 100%);}
+.s-icon{font-size:clamp(60px,12vw,90px);margin-bottom:10px;animation:bounce .9s infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.s-title{font-size:clamp(26px,6vw,46px);font-weight:900;color:#fff;text-shadow:0 3px 10px rgba(0,0,0,0.3);margin-bottom:6px;text-align:center;}
+.s-sub{font-size:clamp(13px,2.5vw,17px);color:rgba(255,255,255,0.9);margin-bottom:32px;text-align:center;padding:0 24px;line-height:1.7;}
+.s-btn{background:#FF7043;color:#fff;border:none;font-size:clamp(20px,4vw,28px);font-weight:800;padding:16px 52px;border-radius:99px;cursor:pointer;box-shadow:0 7px 0 #BF360C;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
+.s-btn:active{transform:translateY(4px);box-shadow:0 3px 0 #BF360C;}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.97);box-shadow:0 2px 10px rgba(0,0,0,0.12);z-index:200;}
+.hud-score{font-size:clamp(15px,3vw,20px);font-weight:800;color:#2E7D32;white-space:nowrap;}
+.hud-life{font-size:clamp(15px,3vw,20px);letter-spacing:1px;}
+.hud-timer{font-size:clamp(13px,2.5vw,17px);font-weight:700;color:#555;white-space:nowrap;margin-left:auto;}
+.hud-timer b{color:#C62828;}
+
+/* GAME AREA */
+#game-area{position:fixed;top:52px;left:0;right:0;bottom:0;overflow:hidden;background:linear-gradient(180deg,#E3F2FD 0%,#B3E5FC 30%,#C8E6C9 70%,#A5D6A7 100%);}
+
+/* BINS */
+#bins{position:absolute;bottom:0;left:0;right:0;display:flex;gap:clamp(3px,1vw,8px);padding:0 clamp(4px,1vw,8px) clamp(8px,2vw,14px);}
+.bin{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;border-radius:14px 14px 8px 8px;padding:clamp(8px,2vw,14px) 4px clamp(10px,2vw,16px);cursor:pointer;transition:transform .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;}
+.bin.highlight{transform:scale(1.07) translateY(-4px);box-shadow:0 0 0 4px #fff,0 8px 24px rgba(0,0,0,0.3)!important;}
+.bin-icon{font-size:clamp(20px,4.5vw,34px);margin-bottom:3px;}
+.bin-name{font-size:clamp(9px,1.6vw,12px);font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.5);text-align:center;line-height:1.2;}
+
+/* ITEM */
+.trash-item{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:grab;touch-action:none;z-index:50;will-change:transform;}
+.t-emoji{font-size:clamp(30px,7vw,50px);line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.2));}
+.t-label{font-size:clamp(9px,1.8vw,13px);font-weight:700;background:rgba(255,255,255,0.95);border-radius:8px;padding:2px 8px;margin-top:3px;color:#333;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
+
+/* TOAST */
+#toast{position:fixed;bottom:clamp(110px,22vw,160px);left:50%;transform:translateX(-50%);z-index:500;border-radius:16px;padding:11px 20px;font-size:clamp(13px,2.5vw,17px);font-weight:700;text-align:center;max-width:88vw;line-height:1.5;pointer-events:none;opacity:0;transition:opacity .2s;box-shadow:0 4px 20px rgba(0,0,0,0.35);}
+#toast.show{opacity:1;}
+#toast.ok{background:rgba(46,125,50,0.95);color:#fff;}
+#toast.ng{background:rgba(198,40,40,0.93);color:#fff;}
+
+/* FLOAT TEXT */
+.ftxt{position:fixed;pointer-events:none;z-index:400;font-size:clamp(18px,4vw,26px);font-weight:900;animation:fup .8s ease-out forwards;text-shadow:0 2px 6px rgba(0,0,0,0.3);}
+@keyframes fup{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(1.3)}}
+
+/* RESULT */
+#result-screen{background:linear-gradient(160deg,#1B5E20,#388E3C);}
+.r-card{background:#fff;border-radius:28px;padding:28px 22px;width:min(88vw,380px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.3);}
+.r-emoji{font-size:clamp(48px,10vw,68px);margin-bottom:10px;}
+.r-title{font-size:clamp(20px,4.5vw,28px);font-weight:900;color:#2E7D32;margin-bottom:6px;}
+.r-score{font-size:clamp(15px,3.5vw,20px);color:#444;margin-bottom:18px;}
+.r-stats{display:flex;gap:8px;margin-bottom:20px;}
+.r-stat{flex:1;border-radius:14px;padding:10px 4px;}
+.r-n{font-size:clamp(20px,4.5vw,28px);font-weight:900;}
+.r-l{font-size:11px;color:#777;margin-top:2px;}
+.r-btn{width:100%;padding:15px;border-radius:99px;border:none;background:linear-gradient(135deg,#66BB6A,#2E7D32);color:#fff;font-size:clamp(17px,4vw,22px);font-weight:800;cursor:pointer;box-shadow:0 6px 0 #1B5E20;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
+.r-btn:active{transform:translateY(3px);box-shadow:0 3px 0 #1B5E20;}
+</style>
+</head>
+<body>
+
+<div id="start-screen" class="screen">
+  <div class="s-icon">♻️</div>
+  <div class="s-title">분리수거 달인!</div>
+  <div class="s-sub">떨어지는 쓰레기를<br>올바른 통에 드래그하세요!<br><b>✅ 맞으면 +10점 / ❌ 틀리면 -5점</b></div>
+  <button class="s-btn" id="start-btn">▶ 시작!</button>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="hud-score">⭐ <span id="score-txt">0</span></div>
+  <div class="hud-life" id="life-txt">❤️❤️❤️</div>
+  <div class="hud-timer">⏱ <b id="timer-txt">60</b>초</div>
+</div>
+
+<div id="game-area" class="hidden">
+  <div id="bins">
+    <div class="bin" id="bin-paper" data-type="paper" style="background:linear-gradient(160deg,#1976D2,#1565C0);box-shadow:0 4px 14px rgba(21,101,192,0.4);">
+      <div class="bin-icon">📄</div><div class="bin-name">종이류</div>
+    </div>
+    <div class="bin" id="bin-plastic" data-type="plastic" style="background:linear-gradient(160deg,#F4511E,#E65100);box-shadow:0 4px 14px rgba(230,81,0,0.4);">
+      <div class="bin-icon">🧴</div><div class="bin-name">플라스틱</div>
+    </div>
+    <div class="bin" id="bin-can" data-type="can" style="background:linear-gradient(160deg,#FB8C00,#F57F17);box-shadow:0 4px 14px rgba(245,127,23,0.4);">
+      <div class="bin-icon">🥫</div><div class="bin-name">캔/고철</div>
+    </div>
+    <div class="bin" id="bin-glass" data-type="glass" style="background:linear-gradient(160deg,#43A047,#2E7D32);box-shadow:0 4px 14px rgba(46,125,50,0.4);">
+      <div class="bin-icon">🫙</div><div class="bin-name">유리</div>
+    </div>
+    <div class="bin" id="bin-general" data-type="general" style="background:linear-gradient(160deg,#6D4C41,#4E342E);box-shadow:0 4px 14px rgba(78,52,46,0.4);">
+      <div class="bin-icon">🗑</div><div class="bin-name">일반<br>쓰레기</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="result-screen" class="screen hidden">
+  <div class="r-card">
+    <div class="r-emoji" id="r-emoji">♻️</div>
+    <div class="r-title" id="r-title">분리수거 달인!</div>
+    <div class="r-score" id="r-score">0점</div>
+    <div class="r-stats">
+      <div class="r-stat" style="background:#E8F5E9"><div class="r-n" style="color:#2E7D32" id="r-correct">0</div><div class="r-l">✅ 정답</div></div>
+      <div class="r-stat" style="background:#FFEBEE"><div class="r-n" style="color:#C62828" id="r-wrong">0</div><div class="r-l">❌ 오답</div></div>
+      <div class="r-stat" style="background:#FFF8E1"><div class="r-n" style="color:#F57F17" id="r-acc">0%</div><div class="r-l">🎯 정확도</div></div>
+    </div>
+    <button class="r-btn" id="retry-btn">🔄 다시 하기!</button>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  {emoji:'📰',name:'신문지',type:'paper',hint:'신문지는 종이류예요!'},
+  {emoji:'📦',name:'택배박스',type:'paper',hint:'골판지 박스는 종이류예요!'},
+  {emoji:'📋',name:'종이컵',type:'general',hint:'종이컵은 코팅 때문에 일반쓰레기!'},
+  {emoji:'🧾',name:'영수증',type:'general',hint:'영수증(감열지)은 일반쓰레기!'},
+  {emoji:'📓',name:'공책',type:'paper',hint:'공책은 종이류예요!'},
+  {emoji:'🧴',name:'샴푸통',type:'plastic',hint:'플라스틱 용기는 씻어서 플라스틱!'},
+  {emoji:'🥤',name:'페트병',type:'plastic',hint:'페트병은 라벨 떼고 플라스틱!'},
+  {emoji:'🛍',name:'비닐봉투',type:'plastic',hint:'깨끗한 비닐은 플라스틱(비닐류)!'},
+  {emoji:'🪥',name:'칫솔',type:'general',hint:'칫솔은 복합재질이라 일반쓰레기!'},
+  {emoji:'🧃',name:'음료팩',type:'general',hint:'빨대 달린 음료팩은 일반쓰레기!'},
+  {emoji:'🥫',name:'참치캔',type:'can',hint:'내용물 비운 캔은 캔/고철류!'},
+  {emoji:'🍺',name:'음료캔',type:'can',hint:'음료캔은 캔/고철류!'},
+  {emoji:'🫙',name:'유리병',type:'glass',hint:'유리병은 유리류로 배출!'},
+  {emoji:'🍾',name:'와인병',type:'glass',hint:'유리 음료병은 유리류!'},
+  {emoji:'💔',name:'깨진유리',type:'general',hint:'깨진 유리는 위험해서 일반쓰레기!'},
+  {emoji:'🧤',name:'고무장갑',type:'general',hint:'고무장갑은 일반쓰레기예요!'},
+  {emoji:'🔋',name:'건전지',type:'general',hint:'건전지는 전용수거함에 버려요!'},
+  {emoji:'💡',name:'형광등',type:'general',hint:'형광등은 전용수거함에 버려요!'},
+  {emoji:'🍕',name:'기름박스',type:'general',hint:'기름 묻은 박스는 일반쓰레기!'},
+  {emoji:'🥛',name:'우유팩',type:'paper',hint:'우유팩은 종이류(따로 배출)!'},
+];
+
+let score=0, lives=3, timeLeft=60, correctCnt=0, wrongCnt=0;
+let activeItems=[], running=false, dragEl=null;
+let timerInt=null, spawnTimeout=null, rafId=null;
+let pool=[], itemCounter=0, toastTimer=null;
+let lastTs=0, dragOffX=0, dragOffY=0;
+
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+function refill(){pool=shuffle([...ITEMS]);}
+
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+
+// ===== HUD =====
+function updateHUD(){
+  document.getElementById('score-txt').textContent=score;
+  document.getElementById('life-txt').textContent='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(Math.max(0,3-lives));
+}
+
+// ===== TOAST =====
+function toast(msg,type){
+  clearTimeout(toastTimer);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+type;
+  toastTimer=setTimeout(()=>{t.className='';},2000);
+}
+
+// ===== FLOAT =====
+function float(x,y,txt,color){
+  const e=document.createElement('div');
+  e.className='ftxt'; e.textContent=txt;
+  e.style.cssText=`left:${x-30}px;top:${y-20}px;color:${color};`;
+  document.body.appendChild(e);
+  setTimeout(()=>e.remove(),900);
+}
+
+// ===== SPAWN =====
+function spawnItem(){
+  if(!running) return;
+  if(pool.length===0) refill();
+  const data=pool.pop();
+  const ga=document.getElementById('game-area');
+  const bins=document.getElementById('bins');
+  const maxX=ga.offsetWidth-70;
+  const id='ti'+(itemCounter++);
+
+  const el=document.createElement('div');
+  el.className='trash-item'; el.id=id;
+  el.dataset.type=data.type; el.dataset.hint=data.hint;
+  el.innerHTML=`<div class="t-emoji">${data.emoji}</div><div class="t-label">${data.name}</div>`;
+  el.style.cssText=`left:${20+Math.random()*maxX}px;top:-80px;`;
+
+  ga.insertBefore(el, bins);
+  const speed=0.7+Math.random()*0.8;
+  activeItems.push({id, el, y:-80, speed, paused:false});
+  addDrag(el);
+}
+
+function scheduleSpawn(delay){
+  if(!running) return;
+  spawnTimeout=setTimeout(()=>{
+    spawnItem();
+    scheduleSpawn(Math.max(800, delay-40));
+  }, delay);
+}
+
+// ===== FALL LOOP =====
+function fallLoop(ts){
+  if(!running) return;
+  const dt=Math.min((ts-lastTs)/16, 3);
+  lastTs=ts;
+
+  const ga=document.getElementById('game-area');
+  const bins=document.getElementById('bins');
+  const binsTop=bins.offsetTop;
+
+  for(let i=activeItems.length-1;i>=0;i--){
+    const item=activeItems[i];
+    if(item.paused||item.el===dragEl) continue;
+    item.y+=item.speed*dt;
+    item.el.style.top=item.y+'px';
+    if(item.y > binsTop-20){
+      // missed
+      item.el.remove();
+      activeItems.splice(i,1);
+      loseLife();
+      toast('⚠️ 놓쳤어요! 드래그해서 통에 넣어요~','ng');
+    }
+  }
+  rafId=requestAnimationFrame(fallLoop);
+}
+
+// ===== DRAG =====
+function addDrag(el){
+  el.addEventListener('mousedown', dragStart);
+  el.addEventListener('touchstart', dragStart, {passive:false});
+}
+
+function dragStart(e){
+  e.preventDefault(); e.stopPropagation();
+  if(!running) return;
+  const pt=e.touches?e.touches[0]:e;
+  dragEl=e.currentTarget;
+  const r=dragEl.getBoundingClientRect();
+  dragOffX=pt.clientX-r.left;
+  dragOffY=pt.clientY-r.top;
+  dragEl.style.zIndex=300;
+  dragEl.style.transform='scale(1.18)';
+  const item=activeItems.find(i=>i.id===dragEl.id);
+  if(item) item.paused=true;
+  document.addEventListener('mousemove',dragMove);
+  document.addEventListener('mouseup',dragEnd);
+  document.addEventListener('touchmove',dragMove,{passive:false});
+  document.addEventListener('touchend',dragEnd);
+}
+
+function dragMove(e){
+  if(!dragEl) return;
+  e.preventDefault();
+  const pt=e.touches?e.touches[0]:e;
+  const ga=document.getElementById('game-area');
+  const gr=ga.getBoundingClientRect();
+  dragEl.style.left=(pt.clientX-gr.left-dragOffX)+'px';
+  dragEl.style.top=(pt.clientY-gr.top-dragOffY)+'px';
+  document.querySelectorAll('.bin').forEach(b=>{
+    const br=b.getBoundingClientRect();
+    b.classList.toggle('highlight',
+      pt.clientX>br.left&&pt.clientX<br.right&&pt.clientY>br.top&&pt.clientY<br.bottom);
+  });
+}
+
+function dragEnd(e){
+  if(!dragEl) return;
+  const pt=e.changedTouches?e.changedTouches[0]:e;
+  document.querySelectorAll('.bin').forEach(b=>b.classList.remove('highlight'));
+  let dropped=false;
+  document.querySelectorAll('.bin').forEach(b=>{
+    const br=b.getBoundingClientRect();
+    if(pt.clientX>br.left&&pt.clientX<br.right&&pt.clientY>br.top&&pt.clientY<br.bottom){
+      dropped=true;
+      const ok=b.dataset.type===dragEl.dataset.type;
+      if(ok){
+        score+=10; correctCnt++;
+        float(pt.clientX,pt.clientY,'+10 ✅','#66BB6A');
+        toast('✅ 정답! '+dragEl.dataset.hint,'ok');
+      } else {
+        score=Math.max(0,score-5); wrongCnt++;
+        float(pt.clientX,pt.clientY,'-5 ❌','#EF5350');
+        toast('❌ 틀렸어요! '+dragEl.dataset.hint,'ng');
+        loseLife();
+      }
+      updateHUD();
+      const idx=activeItems.findIndex(i=>i.id===dragEl.id);
+      if(idx>-1) activeItems.splice(idx,1);
+      dragEl.remove();
+    }
+  });
+  if(!dropped && dragEl){
+    dragEl.style.transform='scale(1)';
+    dragEl.style.zIndex=50;
+    const item=activeItems.find(i=>i.id===dragEl.id);
+    if(item) item.paused=false;
+  }
+  dragEl=null;
+  document.removeEventListener('mousemove',dragMove);
+  document.removeEventListener('mouseup',dragEnd);
+  document.removeEventListener('touchmove',dragMove);
+  document.removeEventListener('touchend',dragEnd);
+}
+
+// ===== LIFE =====
+function loseLife(){
+  lives=Math.max(0,lives-1);
+  updateHUD();
+  if(lives<=0) endGame();
+}
+
+// ===== TIMER =====
+function startTimer(){
+  timerInt=setInterval(()=>{
+    if(!running) return;
+    timeLeft--;
+    document.getElementById('timer-txt').textContent=timeLeft;
+    if(timeLeft<=0) endGame();
+  },1000);
+}
+
+// ===== START =====
+function startGame(){
+  // cleanup
+  clearInterval(timerInt); clearTimeout(spawnTimeout); cancelAnimationFrame(rafId);
+  document.querySelectorAll('.trash-item').forEach(e=>e.remove());
+  activeItems=[]; score=0; lives=3; timeLeft=60; correctCnt=0; wrongCnt=0;
+  dragEl=null; itemCounter=0;
+  refill(); running=true;
+
+  hide('start-screen'); hide('result-screen');
+  show('hud'); show('game-area');
+  updateHUD();
+  document.getElementById('timer-txt').textContent='60';
+
+  lastTs=performance.now();
+  rafId=requestAnimationFrame(fallLoop);
+  startTimer();
+  spawnItem();
+  scheduleSpawn(2000);
+}
+
+// ===== END =====
+function endGame(){
+  running=false;
+  clearInterval(timerInt); clearTimeout(spawnTimeout); cancelAnimationFrame(rafId);
+  document.querySelectorAll('.trash-item').forEach(e=>e.remove());
+  activeItems=[];
+  hide('hud'); hide('game-area');
+  show('result-screen');
+
+  const total=correctCnt+wrongCnt;
+  const acc=total>0?Math.round(correctCnt/total*100):0;
+  let emoji,title;
+  if(acc>=80&&score>=100){emoji='🏆';title='분리수거 달인! 최고예요!';}
+  else if(acc>=60||score>=60){emoji='♻️';title='잘 했어요! 조금만 더!';}
+  else{emoji='📚';title='분리수거를 더 공부해봐요!';}
+
+  document.getElementById('r-emoji').textContent=emoji;
+  document.getElementById('r-title').textContent=title;
+  document.getElementById('r-score').textContent='최종 점수: '+score+'점';
+  document.getElementById('r-correct').textContent=correctCnt;
+  document.getElementById('r-wrong').textContent=wrongCnt;
+  document.getElementById('r-acc').textContent=acc+'%';
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('retry-btn').addEventListener('click', startGame);
+</script>
+</body>
+</html>
